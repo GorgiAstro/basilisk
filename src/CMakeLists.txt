@@ -39,7 +39,8 @@ set(required_conan_libraries eigen/3.3.7@conan/stable)
 option(USE_PROTOBUFFERS "Include modules which use Google Protobuffers" ON)
 option(USE_OPENCV "Include modules which use OpenCV" OFF)
 option(USE_ZMQ "Include modules which use ZMQ" ON)
-option(USE_PYTHON3 "Build For Python 3" ON)
+option(USE_PYTHON3 "Build For Python 3" OFF)
+option(USE_OPENCL "Build with OpenCL" OFF)
 
 set(requires_protobuff_modules "viz_interface/vizInterface.i")
 set(requires_zmq_modules "viz_interface/vizInterface.i")
@@ -93,6 +94,12 @@ if(USE_ZMQ)
    set(CMAKE_INCLUDE_CURRENT_DIR TRUE)
 endif()
 
+if(USE_OPENCL)
+   #! USE_OPENCL
+   find_package(cppzmq CONFIG REQUIRED)
+   message(STATUS "Using ZMQ ${cppzmq_VERSION}")
+   set(CMAKE_INCLUDE_CURRENT_DIR TRUE)
+endif()
 
 # HACK: Create Release and Debug directories for conan
 # Conan hasn't fixed this issue yet, this removes warnings
@@ -522,7 +529,7 @@ if(USE_PROTOBUFFERS)
 endif()
 add_subdirectory("simulation")
 add_subdirectory("fswAlgorithms")
-add_subdirectory("topLevelModules") 	
+add_subdirectory("topLevelModules")
 
 #run python script to modify swig gen code
 add_custom_target(OverwriteSwig ALL)
