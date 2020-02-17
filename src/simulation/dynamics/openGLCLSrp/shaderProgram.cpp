@@ -280,7 +280,7 @@ GLuint ShaderProgram::compileProgram()
 void ShaderProgram::enable()
 {
     GLint result = gl::TRUE_;
-    GLboolean res = gl::IsProgram(this->m_shaderProg); CHECK_GL_ERROR;
+    //GLboolean res = gl::IsProgram(this->m_shaderProg); CHECK_GL_ERROR;
     gl::ValidateProgram(this->m_shaderProg); CHECK_GL_ERROR;
     gl::GetProgramiv(this->m_shaderProg, gl::VALIDATE_STATUS, &result); CHECK_GL_ERROR;
     if(result == gl::FALSE_)

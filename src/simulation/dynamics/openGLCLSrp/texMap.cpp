@@ -31,6 +31,7 @@
 #include <cstdlib>
 #include <cstdint>
 #include <random>
+#include <memory>
 #include <algorithm>
 #include <unistd.h>
 #include "shaderProgram.h"
@@ -42,7 +43,8 @@
 #include "lodepng.h"
 #include "utilities.h"
 #include "EigenGLMUtils.h"
-#include "Mesh.h"
+#include "mesh.h"
+#include "util.h"
 
 const unsigned int kMaxGroupSize = 64;
 const unsigned int kMaxGroupCount = 64;
@@ -106,7 +108,8 @@ bool TexMapSRP::initialize()
     // now that we have a GL context and the framebuffers, we can create a CL context which will share the frame buffers
     this->initializeOpenCl();
     // create the shader manager before we start wanting to reference/access shader progrems
-    this->shaderManager = std::make_unique<ShaderManager>(this->assetDir);
+    this->shaderManager = std::unique_ptr<ShaderManager>(new ShaderManager(this->assetDir));
+    //std::make_unique<ShaderManager>(this->assetDir);
     // with these two set up we can go ahead configuring vertex buffers and shaders programs
     this->initializeMeshModel();
     //        glfwGetFramebufferSize(this->window, &this->fboWidth, &this->fboHeight);
@@ -447,7 +450,7 @@ void TexMapSRP::computeGL()
     BoundingBox box_loose_S = this->looseSunFrameBoundingBox(&this->model);
     BoundingBox box_B = this->model.getBoundingBox();
     
-    double maxLength = box_B.getDiagonalLength();
+    //double maxLength = box_B.getDiagonalLength();
     this->model.setDcmSB(glm::dmat4(eigenToGlmDcm(this->getSB_dcm())));
     
     this->far = abs(box_loose_S.getMaxX() - box_loose_S.getMinX());
@@ -456,15 +459,15 @@ void TexMapSRP::computeGL()
     // 0,0,0 which would be the origin of the body frame.
     glm::dvec3 originBbox_S = box_loose_S.getCenter();
     //    this->cameraMat = glm::lookAt(glm::dvec3(maxLength/2, originBbox_S[1], -originBbox_S[2]), originBbox_S, glm::dvec3(0.0,1.0,0.0));
-    glm::dvec3 targetOffset = glm::dvec3(0.0, 0.0, 0.0);
-    glm::dvec3 eyeOffset = glm::dvec3(0.0, 0.0, 0.0);
+    //glm::dvec3 targetOffset = glm::dvec3(0.0, 0.0, 0.0);
+    //glm::dvec3 eyeOffset = glm::dvec3(0.0, 0.0, 0.0);
     
     this->cameraMat = glm::lookAt(glm::dvec3(box_loose_S.getMaxX(), originBbox_S[1], originBbox_S[2]), originBbox_S, glm::dvec3(0.0,1.0,0.0));
     
     // sun bounding box is generated where for the sun frame sHat_B is the first unit vector making up the frame
     // maxing the X direction towards the sun. Therefore Y and Z form the projection plane coord basis.
-    double maxZ = std::max(abs(box_loose_S.getMinZ() - originBbox_S[2]), abs(box_loose_S.getMaxZ() - originBbox_S[2]));
-    double maxY = std::max(abs(box_loose_S.getMinY() - originBbox_S[1]), abs(box_loose_S.getMaxY() - originBbox_S[1]));
+    //double maxZ = std::max(abs(box_loose_S.getMinZ() - originBbox_S[2]), abs(box_loose_S.getMaxZ() - originBbox_S[2]));
+    //double maxY = std::max(abs(box_loose_S.getMinY() - originBbox_S[1]), abs(box_loose_S.getMaxY() - originBbox_S[1]));
     double maxDim = std::max(abs(box_loose_S.getMinZ()) + abs(box_loose_S.getMaxZ()), abs(box_loose_S.getMinY()) + abs(box_loose_S.getMaxY()));
     this->projMat = glm::ortho(-maxDim/2, maxDim/2, -maxDim/2, maxDim/2, this->near, this->far);
     //    this->projMat = glm::ortho(-maxDim/2, maxDim/2, -maxDim/2, maxDim/2, this->near, this->far);

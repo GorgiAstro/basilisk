@@ -24,10 +24,10 @@ if(NOT CMAKE_BUILD_TYPE)
       "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel." FORCE)
 endif(NOT CMAKE_BUILD_TYPE)
 
+# build for srp
+set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR})
+
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
-
-
-
 
 include(conan)
 conan_add_remote(NAME conan-community URL https://api.bintray.com/conan/conan-community/conan)
@@ -41,6 +41,7 @@ option(USE_OPENCV "Include modules which use OpenCV" OFF)
 option(USE_ZMQ "Include modules which use ZMQ" ON)
 option(USE_PYTHON3 "Build For Python 3" OFF)
 option(USE_OPENCL "Build with OpenCL" OFF)
+option(USE_OPENGL "Build with OpenGL" OFF)
 
 set(requires_protobuff_modules "viz_interface/vizInterface.i")
 set(requires_zmq_modules "viz_interface/vizInterface.i")
@@ -49,7 +50,6 @@ set(requires_zmq_modules "viz_interface/vizInterface.i")
 set(requires_opencv_modules "imageProcessing/houghCircles/houghCircles.i")
 list(APPEND requires_opencv_modules "imageProcessing/limbFinding/limbFinding.i")
 list(APPEND requires_opencv_modules "sensors/camera/camera.i")
-
 
 if(USE_PROTOBUFFERS)
   list(APPEND required_conan_libraries protobuf/3.5.2@bincrafters/stable)
@@ -96,9 +96,19 @@ endif()
 
 if(USE_OPENCL)
    #! USE_OPENCL
-   find_package(cppzmq CONFIG REQUIRED)
-   message(STATUS "Using ZMQ ${cppzmq_VERSION}")
+   if(NOT USE_ZMQ)
+      find_package(cppzmq CONFIG REQUIRED)
+      message(STATUS "Using ZMQ ${cppzmq_VERSION}")
+   endif()
    set(CMAKE_INCLUDE_CURRENT_DIR TRUE)
+   #find_package(OpenCL REQUIRED)
+   #message(STATUS "Using OpenCL ${OpenCL_VERSION_STRING}")
+endif()
+
+# build for srp
+if(USE_OPENGL)
+   #find_package(OpenGL REQUIRED)
+   #message(STATUS "Using OpenGL ${OpenGL_VERSION}")
 endif()
 
 # HACK: Create Release and Debug directories for conan
@@ -301,7 +311,7 @@ function(findAndCreateSwigModules SubModule)
 	        file(GLOB swig_dep_loc "${currentDir}_GeneralModuleFiles/*.i")
 	        set(gen_files "${gen_files};${gen_files_loc}")
 	        set(swig_dep_files "${swig_dep_files};${swig_dep_loc}")
-	    set(endDir ${localDir})
+	        set(endDir ${localDir})
 	    endforeach()
 	    if("${endDir}" STREQUAL "_GeneralModuleFiles")
 	        continue()
@@ -313,11 +323,10 @@ function(findAndCreateSwigModules SubModule)
 
 	    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/${FileDir})
 	    set_source_files_properties(${module} PROPERTIES CPLUSPLUS ON)
-		set_property(SOURCE ${module} PROPERTY SWIG_FLAGS "-I${CMAKE_SOURCE_DIR}/simulation/_GeneralModuleFiles" "-I${CMAKE_CURRENT_SOURCE_DIR}/${FileDir}/")
-		# MESSAGE("${SWIG_FLAGS}")
+		  set_property(SOURCE ${module} PROPERTY SWIG_FLAGS "-I${CMAKE_SOURCE_DIR}/simulation/_GeneralModuleFiles" "-I${CMAKE_CURRENT_SOURCE_DIR}/${FileDir}/")
+		  # MESSAGE("${SWIG_FLAGS}")
 	    #set_source_files_properties(${module} PROPERTIES SWIG_FLAGS "-I${CMAKE_CURRENT_SOURCE_DIR}/${FileDir}/")
-		set_source_files_properties( ${swig_generated_file_fullname}
-	               PROPERTIES COMPILE_FLAGS "-I${CMAKE_SOURCE_DIR}/simulation")
+		  set_source_files_properties( ${swig_generated_file_fullname} PROPERTIES COMPILE_FLAGS "-I${CMAKE_SOURCE_DIR}/simulation")
 	    set(SWIG_MODULE_${FileBase}_EXTRA_DEPS ${impl_files} ${gen_files} ${swig_dep_files})
 	    MAKE_SWIG_MODULE(${FileBase} python ${module} ${impl_files} ${gen_files})
 
@@ -439,8 +448,15 @@ endif()
 
 # Add include directories
 include_directories(simulation)
-include_directories(../libs)
-
+include_directories(
+    ../libs
+    ../libs/openglSupport/glm/include
+    ../libs/openglSupport/glload/include
+    ../libs/openglSupport/glfw/include
+    ../libs/openglSupport/glmesh/include
+    ../libs/openglSupport/glutil/include
+    ../libs/openglSupport/glm/include
+    ../libs/openglSupport/assimp/include)
 
 
 if(CMAKE_SIZEOF_VOID_P EQUAL 8)
@@ -458,13 +474,42 @@ if(WIN32)
       	${CMAKE_SOURCE_DIR}/../libs/cspice/lib/cspice_win${_arch_suffix}.lib
 	)
 elseif(APPLE)
+        find_library(COCOA_LIBRARY Cocoa)
+        find_library(COREFOUNDATION_LIBRARY CoreFoundation)
+        find_library(COREVIDEO_LIBRARY CoreVideo)
+        find_library(AGL_LIBRARY AGL)
+        find_library(OPENGL_LIBRARY OpenGL)
+        find_library(OPENCL_LIBRARY OpenCL)
+        find_library(IOKIT_LIBRARY IOKit)
+        find_library(GLUT_LIBRARY GLUT)
+
+        set(X11_LIBS "")
+        find_package(X11 REQUIRED)
+        include_directories(${X11_INCLUDE_DIR})
+        set(X11_LIBS ${X11_LIBRARIES})
+
 	set(library_dependencies
+                ${COCOA_LIBRARY}
+                ${COREFOUNDATION_LIBRARY}
+                ${COREVIDEO_LIBRARY}
+                ${AGL_LIBRARY}
+                ${OPENGL_LIBRARY}
+                ${OPENCL_LIBRARY}
+                ${IOKIT_LIBRARY}
+                ${GLUT_LIBRARY}
+                ${X11_LIBS}
 		${CMAKE_SOURCE_DIR}/../libs/cspice/lib/cspice_osx.a
-		# ${CMAKE_SOURCE_DIR}/../libs/boost_1_61_0/lib64-osx/libboost_system.a
-# 		${CMAKE_SOURCE_DIR}/../libs/boost_1_61_0/lib64-osx/libboost_serialization.a
-# 		${CMAKE_SOURCE_DIR}/../libs/boost_1_61_0/lib64-osx/libboost_filesystem.a
-#${CMAKE_SOURCE_DIR}/../libs/boost_1_61_0/lib64-osx/libboost_thread.a
-	)
+		#${CMAKE_SOURCE_DIR}/../libs/boost_1_61_0/lib64-osx/libboost_system.a
+                #${CMAKE_SOURCE_DIR}/../libs/boost_1_61_0/lib64-osx/libboost_serialization.a
+                #${CMAKE_SOURCE_DIR}/../libs/boost_1_61_0/lib64-osx/libboost_filesystem.a
+                #${CMAKE_SOURCE_DIR}/../libs/boost_1_61_0/lib64-osx/libboost_thread.a
+                ${CMAKE_SOURCE_DIR}/../libs/openglSupport/assimp/lib/libassimp.3.3.1.dylib
+	        #/usr/local/cellar/assimp/4.1.0/lib/libassimp.4.1.0.dylib
+                ${CMAKE_SOURCE_DIR}/../libs/openglSupport/glfw/lib/libglfw3.a
+                ${CMAKE_SOURCE_DIR}/../libs/openglSupport/glutil/lib/libglutilD.a
+                #${CMAKE_SOURCE_DIR}/../libs/openglSupport/glmesh/lib/libglmeshD.a
+                ${CMAKE_SOURCE_DIR}/../libs/openglSupport/glload/lib/libglloadD.a)
+
    	#set(CMAKE_INSTALL_RPATH "@rpath/../Basilisk")
 	# use, i.e. don't skip the full RPATH for the build tree
 	SET(CMAKE_SKIP_BUILD_RPATH  FALSE)
@@ -481,8 +526,7 @@ elseif(APPLE)
 	SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 else()
 	set(library_dependencies
-		${CMAKE_SOURCE_DIR}/../libs/cspice/lib/cspice.a
-	)
+		${CMAKE_SOURCE_DIR}/../libs/cspice/lib/cspice.a)
 	SET(CMAKE_SKIP_BUILD_RPATH  FALSE)
 	set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
 	set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}../libs/")

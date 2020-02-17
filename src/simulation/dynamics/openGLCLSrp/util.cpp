@@ -57,7 +57,6 @@ bool ReadFile(const char* pFileName, string& outFile)
     return ret;
 }
 
-
 #ifdef WIN32
 
 bool ReadBinaryFile(const char* pFileName, std::vector<int>& v)

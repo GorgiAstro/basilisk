@@ -145,6 +145,8 @@
 #ifndef CL_HPP_
 #define CL_HPP_
 
+#define CL_SILENCE_DEPRECATION
+
 #ifdef _WIN32
 
 #include <malloc.h>

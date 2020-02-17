@@ -282,11 +282,11 @@ void OpenGLCLSrp::computeForceTorque(double integTime)
 
     double R_s = this->s_N.norm();
 
-    this->forceExternal_B = this->eclipseMsgBuffer.shadowFactor*normalizedForcePerArea*(SOLAR_FLUX_EARTH_OREX*(AU*1000*AU*1000)/(SPEED_LIGHT*R_s*R_s)); // for regular bsk sims
+    this->forceExternal_B = this->eclipseMsgBuffer.shadowFactor*normalizedForcePerArea*(SOLAR_FLUX_EARTH*(AU*1000*AU*1000)/(SPEED_LIGHT*R_s*R_s)); // for regular bsk sims
     // TODO: remove but only by pat
     //    this->forceExternal_B = normalizedForcePerArea; // for Orex
 
-    this->torqueExternalPntB_B = this->eclipseMsgBuffer.shadowFactor*normalizedTorquePerArea*(SOLAR_FLUX_EARTH_OREX*AU*1000*AU*1000/(SPEED_LIGHT*R_s*R_s));
+    this->torqueExternalPntB_B = this->eclipseMsgBuffer.shadowFactor*normalizedTorquePerArea*(SOLAR_FLUX_EARTH*AU*1000*AU*1000/(SPEED_LIGHT*R_s*R_s));
 //    std::cout << "normalizedForcePerArea: " << normalizedForcePerArea[0] << " " << normalizedForcePerArea[1] << " " << normalizedForcePerArea[2] << std::endl;
 }
 

@@ -43,6 +43,7 @@ THE SOFTWARE.
 //#define GLFW_EXPOSE_NATIVE_GLX
 //#endif
 
+#include <memory>
 #include <Eigen/Dense>
 #include <unordered_map>
 #include "utilities/avsEigenSupport.h"
