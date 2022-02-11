@@ -290,6 +290,7 @@ function(generate_package_targets TARGET_LIST LIB_DEP_LIST MODULE_DIR)
         
         # Collect any external dependencies
         set(CUSTOM_DEPENDENCIES)
+        set(CUSTOM_INCLUDES)
         set(CUSTOM_DEPENDENCIES_HANDLED)
         if(EXISTS "${CMAKE_SOURCE_DIR}/${PARENT_DIR}/Custom.cmake")
           MESSAGE(STATUS "Including Custom Build Steps for: ${TARGET_FILE}")
@@ -338,6 +339,10 @@ function(generate_package_targets TARGET_LIST LIB_DEP_LIST MODULE_DIR)
         # Add any custom user defined targets to the build aka external library
         foreach(CUSTOM_LIB ${CUSTOM_DEPENDENCIES})
           target_link_libraries(${TARGET_NAME} ${CUSTOM_LIB})
+        endforeach()
+
+        foreach(CUSTOM_INCLUDE ${CUSTOM_INCLUDES})
+            target_include_directories(${TARGET_NAME} PRIVATE ${CUSTOM_INCLUDE})
         endforeach()
 
         target_include_directories(${TARGET_NAME} PRIVATE ${PYTHON_INCLUDE_PATH}) # Exposes python.h to wrap.c(xx) file
