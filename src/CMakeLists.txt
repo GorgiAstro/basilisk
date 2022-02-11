@@ -44,7 +44,7 @@ list(APPEND CMAKE_PREFIX_PATH "${CMAKE_BINARY_DIR}/conan")
 
 option(BUILD_VIZINTERFACE "Build VizInterface Module" ON)
 option(BUILD_OPNAV "Build OpNav Modules" OFF)
-
+option(BUILD_OPENGLCL_SRP "Build OpenGLCL Solar Radiation Pressure Module" OFF)
 
 
 

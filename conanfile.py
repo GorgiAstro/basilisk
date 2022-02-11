@@ -23,6 +23,7 @@ except ModuleNotFoundError:
 bskModuleOptionsBool = {
     "opNav": False,
     "vizInterface": True,
+    "openglclSrp": True,
     "buildProject": True
 }
 bskModuleOptionsString = {
@@ -187,6 +188,11 @@ class BasiliskConan(ConanFile):
             self.requires.add("cppzmq/4.3.0@bincrafters/stable")
             self.requires.add("protoc_installer/3.5.2@bincrafters/stable")
 
+        if self.options.openglclSrp:
+            self.requires.add("glfw/3.3.6")
+            self.requires.add("glm/0.9.9.8")
+            self.requires.add("opengl/system")
+
     def configure(self):
         if self.options.clean:
             # clean the distribution folder to start fresh
@@ -273,6 +279,7 @@ class BasiliskConan(ConanFile):
             cmake.definitions["CONAN_LINK_RUNTIME"] = False
         cmake.definitions["BUILD_OPNAV"] = self.options.opNav
         cmake.definitions["BUILD_VIZINTERFACE"] = self.options.vizInterface
+        cmake.definitions["BUILD_OPENGLCL_SRP"] = self.options.openglclSrp
         cmake.definitions["EXTERNAL_MODULES_PATH"] = self.options.pathToExternalModules
         cmake.definitions["PYTHON_VERSION"] = sys.version_info.major + 0.1*sys.version_info.minor
         cmake.parallel = True
