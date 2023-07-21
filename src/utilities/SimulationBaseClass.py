@@ -237,10 +237,24 @@ class SimBaseClass:
                           ", " + moduleColor + "priority: " + endColor + str(module.modelPriority))
             print("")
 
+
     def ShowExecutionFigure(self, show_plots=False):
         """
         Shows in what order the Basilisk processes, task lists and modules are executed
         """
+
+        from diagrams import Diagram, Cluster, Edge
+        from diagrams.generic.blank import Blank
+        graph_attrs = {
+            "nodesep": "0.1",
+            #"size": "100",
+        }
+        cluster_attrs = {
+            #"margin": "0.1,0.1",
+            "fontsize": "15.0"
+        }
+        module_height="0.1"
+
         processList = OrderedDict()
         for processData in self. TotalSim.processList:
             taskList = OrderedDict()
@@ -261,61 +275,32 @@ class SimBaseClass:
                     task.rate / 1.0e9) + "s)"] = moduleList
             processList[pyProc.Name + " (" + str(pyProc.pyProcPriority) + ")"] = taskList
 
-        fig = plt.figure()
-        plt.rcParams.update({'font.size': 8})
-        plt.axis('off')
 
-        processNo = 0
-        processWidth = 6
-        lineHeight = 0.5
-        textBuffer = lineHeight*0.75
-        textIndent = lineHeight*0.25
-        processGap = 0.5
-        for process in processList:
-            # Draw process box + priority
-            rectangle = plt.Rectangle(((processWidth+processGap)*processNo, 0), processWidth, -lineHeight, ec='g', fc='g')
-            plt.gca().add_patch(rectangle)
-            plt.text((processWidth+processGap)*processNo + textIndent, -textBuffer, process, color='w')
+        with Diagram("Execution figure", show=False,graph_attr=graph_attrs, direction="LR") as diag:
+            processNo = 0
+            last_process_node = None
+            for process in processList:
+                # Draw process box + priority
+                last_task_node = None
+                with Cluster(process, graph_attr = cluster_attrs, direction="LR"):
+                    taskNo = 0
+                    for task in processList[process]:
+                        with Cluster(task, graph_attr = cluster_attrs, direction="TB"):
+                            for module in processList[process][task]:
+                                module_node = Blank(module, height=module_height)
 
-            taskNo = 0
-            currentLine = -lineHeight - textIndent
-            for task in processList[process]:
-                # Draw task box + priority + task rate
-                rectangle = plt.Rectangle(((processWidth + processGap) * processNo + textIndent, currentLine)
-                                          , processWidth - 2 * textIndent
-                                          , - (1+len(processList[process][task])) * (lineHeight + textIndent),
-                                          ec='y', fc=(1,1,1,0))
-                plt.gca().add_patch(rectangle)
-                rectangle = plt.Rectangle(((processWidth + processGap) * processNo + textIndent, currentLine)
-                                          , processWidth - 2 * textIndent, -lineHeight,
-                                          ec='y', fc='y')
-                plt.gca().add_patch(rectangle)
-                plt.text((processWidth + processGap) * processNo + 2*textIndent,
-                         currentLine-textBuffer, task, color='black')
+                        taskNo += 1
 
-                for module in processList[process][task]:
-                    # Draw modules + priority
-                    currentLine -= lineHeight + textIndent
-                    rectangle = plt.Rectangle(((processWidth + processGap) * processNo + 2*textIndent, currentLine)
-                                              , processWidth - 4 * textIndent, -lineHeight,
-                                              ec='c', fc=(1,1,1,0))
-                    plt.gca().add_patch(rectangle)
-                    plt.text((processWidth + processGap) * processNo + 3*textIndent,
-                             currentLine-textBuffer, module, color='black')
+                        if last_task_node is not None:
+                            last_task_node >> Edge(style="invis") >> module_node
+                        last_task_node = module_node
 
-                taskNo += 1
-                currentLine -=  lineHeight + 2 * textIndent
+                    processNo += 1
+                if last_process_node is not None:
+                    last_process_node >> Edge(style="invis") >> module_node
+                last_process_node = module_node
 
-            rectangle = plt.Rectangle(((processWidth+processGap)*processNo, 0), processWidth, currentLine, ec='g', fc=(1,1,1,0))
-            plt.gca().add_patch(rectangle)
-            processNo += 1
-
-        plt.axis('scaled')
-
-        if show_plots:
-            plt.show()
-
-        return fig
+            return diag
 
     def AddModelToTask(self, TaskName, NewModel, ModelData=None, ModelPriority=-1):
         """
